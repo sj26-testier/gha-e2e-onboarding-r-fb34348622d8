@@ -1,0 +1,26 @@
+{
+  "name": "source-chain",
+  "on": {
+    "workflow_call": {
+      "inputs": {
+        "expected_source": {
+          "type": "string",
+          "required": true
+        },
+        "expected_secret": {
+          "type": "string",
+          "default": "absent"
+        }
+      }
+    }
+  },
+  "jobs": {
+    "nested": {
+      "uses": "./.github/workflows/source-inner.yml",
+      "with": {
+        "expected_source": "${{ inputs.expected_source }}",
+        "expected_secret": "${{ inputs.expected_secret }}"
+      }
+    }
+  }
+}

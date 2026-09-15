@@ -1,0 +1,35 @@
+{
+  "name": "Forwarding inherit",
+  "on": {
+    "workflow_call": {
+      "inputs": {
+        "expected_source": {
+          "type": "string",
+          "required": true
+        },
+        "expected_secret": {
+          "type": "string",
+          "default": "absent"
+        }
+      },
+      "secrets": {
+        "incoming": {
+          "required": false
+        },
+        "probe": {
+          "required": false
+        }
+      }
+    }
+  },
+  "jobs": {
+    "nested": {
+      "uses": "$/.github/workflows/leaf.yml",
+      "with": {
+        "expected_source": "${{ inputs.expected_source }}",
+        "expected_secret": "${{ inputs.expected_secret }}"
+      },
+      "secrets": "inherit"
+    }
+  }
+}

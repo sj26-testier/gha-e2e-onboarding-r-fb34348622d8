@@ -1,0 +1,19 @@
+{
+  "name": "Immutable source probe",
+  "description": "Public lab marker only",
+  "outputs": {
+    "marker": {
+      "description": "Non-secret source marker",
+      "value": "${{ steps.child.outputs.marker }}"
+    }
+  },
+  "runs": {
+    "using": "composite",
+    "steps": [
+      {
+        "uses": "$/actions/leaf",
+        "id": "child"
+      }
+    ]
+  }
+}

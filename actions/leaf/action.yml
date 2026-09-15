@@ -1,0 +1,20 @@
+{
+  "name": "Immutable source probe",
+  "description": "Public lab marker only",
+  "outputs": {
+    "marker": {
+      "description": "Non-secret source marker",
+      "value": "${{ steps.emit.outputs.marker }}"
+    }
+  },
+  "runs": {
+    "using": "composite",
+    "steps": [
+      {
+        "id": "emit",
+        "shell": "bash",
+        "run": "printf \"marker=A\\n\" >> \"$GITHUB_OUTPUT\""
+      }
+    ]
+  }
+}

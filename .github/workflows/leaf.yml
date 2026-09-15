@@ -1,0 +1,50 @@
+{
+  "name": "Source and secret leaf",
+  "on": {
+    "workflow_call": {
+      "inputs": {
+        "expected_source": {
+          "type": "string",
+          "required": true
+        },
+        "expected_secret": {
+          "type": "string",
+          "default": "absent"
+        }
+      },
+      "secrets": {
+        "probe": {
+          "required": false
+        }
+      }
+    }
+  },
+  "jobs": {
+    "leaf": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 5,
+      "steps": [
+        {
+          "uses": "$/actions/leaf",
+          "id": "source"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.source.outputs.marker }}",
+            "EXPECTED": "${{ inputs.expected_source }}"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        },
+        {
+          "name": "Assert secret presence without disclosing value",
+          "env": {
+            "PROBE": "${{ secrets.probe }}",
+            "EXPECTED": "${{ inputs.expected_secret }}"
+          },
+          "run": "actual=absent\nif test -n \"$PROBE\"; then actual=present; fi\ntest \"$actual\" = \"$EXPECTED\"\nprintf \"SECRET_ASSERTION=%s\\n\" \"$actual\""
+        }
+      ]
+    }
+  }
+}
