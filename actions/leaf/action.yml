@@ -13,7 +13,7 @@
       {
         "id": "emit",
         "shell": "bash",
-        "run": "printf \"marker=A\\n\" >> \"$GITHUB_OUTPUT\""
+        "run": "printf \"marker=B\\n\" >> \"$GITHUB_OUTPUT\""
       }
     ]
   }
