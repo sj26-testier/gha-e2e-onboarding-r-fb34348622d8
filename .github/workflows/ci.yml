@@ -12,14 +12,165 @@
     "contents": "read"
   },
   "jobs": {
-    "seed": {
+    "root-no-checkout": {
       "runs-on": "ubuntu-latest",
       "timeout-minutes": 5,
       "steps": [
         {
-          "run": "echo seed-only"
+          "uses": "$/",
+          "id": "root"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.root.outputs.marker }}",
+            "EXPECTED": "B"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        },
+        {
+          "uses": "$/actions/leaf",
+          "id": "leaf"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.leaf.outputs.marker }}",
+            "EXPECTED": "B"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
         }
       ]
+    },
+    "older-checkout": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 5,
+      "steps": [
+        {
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "with": {
+            "ref": "0d1ebb3e90bee5af63aef91dcb2d00b2587ab546",
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Assert checkout is older source A",
+          "run": "test \"$(git rev-parse HEAD)\" = \"0d1ebb3e90bee5af63aef91dcb2d00b2587ab546\"\ntest \"$(cat source-marker.txt)\" = A\necho CHECKOUT_ASSERTION=A"
+        },
+        {
+          "uses": "$/actions/leaf",
+          "id": "self"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.self.outputs.marker }}",
+            "EXPECTED": "B"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        },
+        {
+          "uses": "./actions/local-wrapper",
+          "id": "local"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.local.outputs.marker }}",
+            "EXPECTED": "B"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        }
+      ]
+    },
+    "remote-composite": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 5,
+      "steps": [
+        {
+          "uses": "sj26-testier/gha-e2e-onboarding-r-fb34348622d8/actions/parent@0d1ebb3e90bee5af63aef91dcb2d00b2587ab546",
+          "id": "remote"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.remote.outputs.marker }}",
+            "EXPECTED": "A"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        },
+        {
+          "uses": "$/actions/leaf",
+          "id": "root"
+        },
+        {
+          "name": "Assert immutable source marker",
+          "env": {
+            "ACTUAL": "${{ steps.root.outputs.marker }}",
+            "EXPECTED": "B"
+          },
+          "run": "test \"$ACTUAL\" = \"$EXPECTED\"\nprintf \"SOURCE_ASSERTION=%s\\n\" \"$ACTUAL\""
+        }
+      ]
+    },
+    "root-source-chain": {
+      "uses": "$/.github/workflows/source-chain.yml",
+      "with": {
+        "expected_source": "B"
+      }
+    },
+    "remote-source-chain": {
+      "uses": "sj26-testier/gha-e2e-onboarding-r-fb34348622d8/.github/workflows/source-chain.yml@0d1ebb3e90bee5af63aef91dcb2d00b2587ab546",
+      "with": {
+        "expected_source": "A"
+      }
+    },
+    "self-map": {
+      "uses": "$/.github/workflows/middle-map.yml",
+      "with": {
+        "expected_source": "B",
+        "expected_secret": "present"
+      },
+      "secrets": {
+        "incoming": "${{ secrets.GITHUB_TOKEN }}"
+      }
+    },
+    "self-inherit": {
+      "uses": "$/.github/workflows/middle-inherit.yml",
+      "with": {
+        "expected_source": "B",
+        "expected_secret": "present"
+      },
+      "secrets": {
+        "probe": "${{ secrets.GITHUB_TOKEN }}"
+      }
+    },
+    "local-then-self": {
+      "uses": "./.github/workflows/middle-inherit.yml",
+      "with": {
+        "expected_source": "B",
+        "expected_secret": "present"
+      },
+      "secrets": {
+        "probe": "${{ secrets.GITHUB_TOKEN }}"
+      }
+    },
+    "omit-first": {
+      "uses": "$/.github/workflows/middle-map.yml",
+      "with": {
+        "expected_source": "B",
+        "expected_secret": "absent"
+      }
+    },
+    "omit-second": {
+      "uses": "$/.github/workflows/middle-none.yml",
+      "with": {
+        "expected_source": "B",
+        "expected_secret": "absent"
+      },
+      "secrets": {
+        "incoming": "${{ secrets.GITHUB_TOKEN }}"
+      }
     }
   }
 }
